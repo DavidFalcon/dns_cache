@@ -1,6 +1,6 @@
 #include <iostream>
 
-#include "cache/dns_cache.hpp"
+#include "dns_cache.hpp"
 
 int main(int argc, char ** argv)
 {
