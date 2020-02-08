@@ -1,8 +1,8 @@
 #pragma once
 
-#include <list>
-#include <unordered_map>
+#include <string_view>
 #include <shared_mutex>
+#include <unordered_map>
 
 class DNSCache
 {
@@ -39,18 +39,27 @@ public:
     DNSCache& operator=(const DNSCache&) = delete;
 
 private:
-
     explicit DNSCache(size_t max_size);
 
+    struct Node
+    {
+        std::string ip;
+        std::string_view prev;
+        std::string_view next;
+
+        Node(const std::string& ip_ = "") : ip(ip_) {}
+    };
+    using DNSInfo = std::unordered_map<std::string, Node>;
+
+    void up(DNSInfo::iterator& it);
+    void up_head(DNSInfo::iterator& it);
+    void pop_back();
     void insert(const std::string& name, const std::string& ip);
 
 private:
-    using DNSInfo      = std::pair<std::string, std::string>;
-    using CacheList    = std::list<DNSInfo>;
-    using CacheResolve = std::unordered_map<std::string, CacheList::iterator>;
-
     size_t _max_size;
-    CacheList _dns;
-    CacheResolve _dns_resolve;
+    std::string_view _head;
+    std::string_view _tail;
+    DNSInfo _dns;
     mutable std::shared_mutex _mutex;
 };

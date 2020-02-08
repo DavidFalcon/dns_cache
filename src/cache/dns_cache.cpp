@@ -7,12 +7,13 @@ DNSCache::DNSCache(size_t max_size) : _max_size(max_size)
 {
     if(_max_size > 0)
     {
-        _dns_resolve.reserve(_max_size);
+        _dns.reserve(_max_size);
     }
     else
     {
         std::cerr << "Incorrect size for DNSCache = " << _max_size << "\n"
                   << "Used default = "<< CACHE_SIZE_DEF << "\n";
+        _dns.reserve(CACHE_SIZE_DEF);
     }
 }
 //------------------------------------------------------------------------------
@@ -20,24 +21,19 @@ DNSCache::DNSCache(size_t max_size) : _max_size(max_size)
 void DNSCache::update(const std::string& name, const std::string& ip)
 {
     std::unique_lock lock(_mutex);
-    auto dns_iter = _dns_resolve.find(name);
-    // try update cache
-    if(dns_iter != _dns_resolve.end())
+
+    auto dns_iter = _dns.find(name);
+    /// try update cache
+    if(dns_iter != _dns.end())
     {
-        // remove old data
-        _dns.erase(dns_iter->second);
-        // update dns info
-        insert(name, ip);
+        (dns_iter->second).ip = ip;
+        up(dns_iter);
     }
     else
     {
         if(_dns.size() == _max_size)
-        {
-            // erase old data
-            _dns_resolve.erase(_dns.front().first);
-            _dns.pop_front();
-        }
-        // update dns info
+            pop_back();
+
         insert(name, ip);
     }
 }
@@ -46,9 +42,10 @@ void DNSCache::update(const std::string& name, const std::string& ip)
 std::string DNSCache::resolve(const std::string& name) const
 {
     std::shared_lock lock(_mutex);
-    auto dns_iter = _dns_resolve.find(name);
-    if( dns_iter != _dns_resolve.end() )
-        return (dns_iter->second)->second;
+
+    auto dns_iter = _dns.find(name);
+    if( dns_iter != _dns.end() )
+        return (dns_iter->second).ip;
     return "";
 }
 //------------------------------------------------------------------------------
@@ -58,20 +55,72 @@ size_t DNSCache::size() const
     std::shared_lock lock(_mutex);
     return _dns.size();
 }
+//------------------------------------------------------------------------------
 
 void DNSCache::reinit(size_t new_size)
 {
     std::unique_lock lock(_mutex);
     _max_size = new_size;
     _dns.clear();
-    _dns_resolve.clear();
-    _dns_resolve.reserve(_max_size);
+    _dns.reserve(_max_size);
+}
+//------------------------------------------------------------------------------
+
+void DNSCache::up(DNSInfo::iterator& it)
+{
+    if(!it->second.prev.empty())
+    {
+        auto node_prev = _dns[std::string(it->second.prev)];
+        node_prev.next = it->second.next;
+
+        if(!it->second.next.empty())
+        {
+            auto node_next = _dns[std::string(it->second.next)];
+            node_next.prev = it->second.prev;
+        }
+        else
+        {
+            _tail = it->second.prev;
+        }
+
+        up_head(it);
+    }
+}
+//------------------------------------------------------------------------------
+
+void DNSCache::up_head(DNSInfo::iterator& it)
+{
+    auto node_head = _dns[std::string(_head)];
+    node_head.prev = it->first;
+    it->second.next = _head;
+    _head = it->first;
+}
+//------------------------------------------------------------------------------
+
+void DNSCache::pop_back()
+{
+    auto node_tail = _dns[std::string(_tail)];
+    if(!node_tail.prev.empty()) // [[likely]] in c++20
+    {
+        auto node_prev = _dns.find(std::string(node_tail.prev));
+        node_prev->second.next = "";
+        _tail = node_prev->first;
+    }
+    _dns.erase(std::string(_tail));
 }
 //------------------------------------------------------------------------------
 
 void DNSCache::insert(const std::string& name, const std::string& ip)
 {
-    _dns.emplace_back(name, ip);
-    _dns_resolve[name] = std::prev(_dns.end());
+    auto it = _dns.emplace(name, ip);
+
+    if(_dns.size() != 1) // [[likely]] in c++20
+    {
+        up_head(it.first);
+    }
+    else
+    {
+        _head = _tail = it.first->first;
+    }
 }
 //------------------------------------------------------------------------------
