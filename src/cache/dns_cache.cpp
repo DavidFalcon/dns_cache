@@ -4,18 +4,9 @@
 
 #include "dns_cache.hpp"
 
-DNSCache::DNSCache(size_t max_size) : _max_size(max_size)
+DNSCache::DNSCache(size_t max_size)
 {
-    if(_max_size > 0)
-    {
-        _dns.reserve(_max_size);
-    }
-    else
-    {
-        std::cerr << "Incorrect size for DNSCache = " << _max_size << "\n"
-                  << "Used default = "<< CACHE_SIZE_DEF << "\n";
-        _dns.reserve(CACHE_SIZE_DEF);
-    }
+    resize(max_size);
 }
 //------------------------------------------------------------------------------
 
@@ -58,12 +49,31 @@ size_t DNSCache::size() const
 }
 //------------------------------------------------------------------------------
 
+size_t DNSCache::max_size() const
+{
+    std::shared_lock lock(_mutex);
+    return _max_size;
+}
+//------------------------------------------------------------------------------
+
+void DNSCache::resize(size_t max_size)
+{
+    _max_size = max_size;
+    if(!_max_size)
+    {
+        std::cerr << "Incorrect size for DNSCache = " << max_size << "\n"
+                  << "Used default = "<< CACHE_SIZE_DEF << "\n";
+        _max_size = CACHE_SIZE_DEF;
+    }
+    _dns.reserve(_max_size);
+}
+//------------------------------------------------------------------------------
+
 void DNSCache::reinit(size_t new_size)
 {
     std::unique_lock lock(_mutex);
-    _max_size = new_size;
     _dns.clear();
-    _dns.reserve(_max_size);
+    resize(new_size);
 }
 //------------------------------------------------------------------------------
 
@@ -71,13 +81,13 @@ void DNSCache::up(DNSInfo::iterator& it)
 {
     if(it->second.prev)
     {
-        auto node_prev = _dns[*it->second.prev];
-        node_prev.next = it->second.next;
+        auto& node_prev = _dns[*it->second.prev];
+        node_prev.next  = it->second.next;
 
         if(it->second.next)
         {
-            auto node_next = _dns[*it->second.next];
-            node_next.prev = it->second.prev;
+            auto& node_next = _dns[*it->second.next];
+            node_next.prev  = it->second.prev;
         }
         else
         {
@@ -93,7 +103,8 @@ void DNSCache::up_head(DNSInfo::iterator& it)
 {
     assert(_head);
 
-    auto node_head = _dns[*_head];
+    auto& node_head = _dns[*_head];
+
     node_head.prev = &(it->first);
     it->second.next = _head;
     _head = &(it->first);
@@ -104,15 +115,19 @@ void DNSCache::pop_back()
 {
     assert(_tail);
 
-    auto node_tail = _dns[*_tail];
-    if(node_tail.prev) // [[likely]] in c++20
+    auto node_tail = _dns.find(*_tail);
+    if(node_tail->second.prev) // [[likely]] in c++20
     {
-        auto node_prev = _dns.find(*node_tail.prev);
+        auto node_prev = _dns.find(*node_tail->second.prev);
         node_prev->second.next = nullptr;
         _tail = &(node_prev->first);
     }
-    _dns.erase(*_tail);
-    _tail = nullptr;
+    else
+    {
+        std::cout << "WFT \n";
+        _head = _tail = nullptr;
+    }
+    _dns.erase(node_tail);
 }
 //------------------------------------------------------------------------------
 

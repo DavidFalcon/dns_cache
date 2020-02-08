@@ -3,6 +3,8 @@
 #include <shared_mutex>
 #include <unordered_map>
 
+#include <iostream>
+
 class DNSCache
 {
 public:
@@ -27,6 +29,7 @@ public:
     std::string resolve(const std::string& name) const;
 
     size_t size() const;
+    size_t max_size() const;
 
     /// reinit used only for gtests
     void reinit(size_t new_size = CACHE_SIZE_DEF);
@@ -50,6 +53,7 @@ private:
     };
     using DNSInfo = std::unordered_map<std::string, Node>;
 
+    void resize(size_t max_size);
     void up(DNSInfo::iterator& it);
     void up_head(DNSInfo::iterator& it);
     void pop_back();

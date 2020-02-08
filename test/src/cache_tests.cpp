@@ -1,12 +1,26 @@
 #include "dns_cache.hpp"
 #include "gtest/gtest.h"
-#include <iostream>
-using namespace std;
+
+TEST(DNS, singleton)
+{
+    DNSCache::init(10);
+    ASSERT_EQ(DNSCache::inst().max_size(), 10);
+
+    DNSCache::init(100);
+    ASSERT_EQ(DNSCache::inst().max_size(), 10);
+
+    auto& inst = DNSCache::inst();
+    DNSCache::inst().reinit(20);
+    ASSERT_EQ(&inst, &DNSCache::inst());
+}
 
 TEST(DNS, DefaultSize)
 {
     DNSCache::init(3);
     ASSERT_EQ(DNSCache::inst().size(), 0);
+
+    DNSCache::inst().reinit(0);
+    ASSERT_EQ(DNSCache::inst().max_size(), DNSCache::CACHE_SIZE_DEF);
 }
 
 TEST(DNS, Size)
@@ -38,3 +52,4 @@ TEST(DNS, Update)
     ASSERT_EQ(DNSCache::inst().resolve("f"), "");
     ASSERT_EQ(DNSCache::inst().resolve("d"), "4");
 }
+
