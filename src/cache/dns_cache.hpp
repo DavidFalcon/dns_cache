@@ -1,6 +1,5 @@
 #pragma once
 
-#include <string_view>
 #include <shared_mutex>
 #include <unordered_map>
 
@@ -44,8 +43,8 @@ private:
     struct Node
     {
         std::string ip;
-        std::string_view prev;
-        std::string_view next;
+        const std::string* prev = nullptr;
+        const std::string* next = nullptr;
 
         Node(const std::string& ip_ = "") : ip(ip_) {}
     };
@@ -58,8 +57,8 @@ private:
 
 private:
     size_t _max_size;
-    std::string_view _head;
-    std::string_view _tail;
+    const std::string* _head = nullptr;
+    const std::string* _tail = nullptr;
     DNSInfo _dns;
     mutable std::shared_mutex _mutex;
 };

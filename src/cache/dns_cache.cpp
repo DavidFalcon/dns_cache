@@ -1,5 +1,6 @@
 #include <iostream>
 #include <mutex>
+#include <cassert>
 
 #include "dns_cache.hpp"
 
@@ -68,14 +69,14 @@ void DNSCache::reinit(size_t new_size)
 
 void DNSCache::up(DNSInfo::iterator& it)
 {
-    if(!it->second.prev.empty())
+    if(it->second.prev)
     {
-        auto node_prev = _dns[std::string(it->second.prev)];
+        auto node_prev = _dns[*it->second.prev];
         node_prev.next = it->second.next;
 
-        if(!it->second.next.empty())
+        if(it->second.next)
         {
-            auto node_next = _dns[std::string(it->second.next)];
+            auto node_next = _dns[*it->second.next];
             node_next.prev = it->second.prev;
         }
         else
@@ -90,23 +91,28 @@ void DNSCache::up(DNSInfo::iterator& it)
 
 void DNSCache::up_head(DNSInfo::iterator& it)
 {
-    auto node_head = _dns[std::string(_head)];
-    node_head.prev = it->first;
+    assert(_head);
+
+    auto node_head = _dns[*_head];
+    node_head.prev = &(it->first);
     it->second.next = _head;
-    _head = it->first;
+    _head = &(it->first);
 }
 //------------------------------------------------------------------------------
 
 void DNSCache::pop_back()
 {
-    auto node_tail = _dns[std::string(_tail)];
-    if(!node_tail.prev.empty()) // [[likely]] in c++20
+    assert(_tail);
+
+    auto node_tail = _dns[*_tail];
+    if(node_tail.prev) // [[likely]] in c++20
     {
-        auto node_prev = _dns.find(std::string(node_tail.prev));
-        node_prev->second.next = "";
-        _tail = node_prev->first;
+        auto node_prev = _dns.find(*node_tail.prev);
+        node_prev->second.next = nullptr;
+        _tail = &(node_prev->first);
     }
-    _dns.erase(std::string(_tail));
+    _dns.erase(*_tail);
+    _tail = nullptr;
 }
 //------------------------------------------------------------------------------
 
@@ -120,7 +126,7 @@ void DNSCache::insert(const std::string& name, const std::string& ip)
     }
     else
     {
-        _head = _tail = it.first->first;
+        _head = _tail = &(it.first->first);
     }
 }
 //------------------------------------------------------------------------------
