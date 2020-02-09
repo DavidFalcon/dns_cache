@@ -3,7 +3,7 @@
 #include <shared_mutex>
 #include <unordered_map>
 
-#include <iostream>
+#include "shared_m.hpp"
 
 class DNSCache
 {
@@ -64,5 +64,6 @@ private:
     const std::string* _head = nullptr;
     const std::string* _tail = nullptr;
     DNSInfo _dns;
-    mutable std::shared_mutex _mutex;
+    mutable sf::contention_free_shared_mutex<> _mutex;
+    //mutable std::shared_mutex _mutex;
 };

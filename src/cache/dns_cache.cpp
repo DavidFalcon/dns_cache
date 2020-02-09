@@ -1,6 +1,7 @@
 #include <iostream>
 #include <mutex>
 #include <cassert>
+#include <iostream>
 
 #include "dns_cache.hpp"
 
