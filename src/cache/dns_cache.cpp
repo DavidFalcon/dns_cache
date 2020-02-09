@@ -66,7 +66,7 @@ void DNSCache::resize(size_t max_size)
                   << "Used default = "<< CACHE_SIZE_DEF << "\n";
         _max_size = CACHE_SIZE_DEF;
     }
-    _dns.reserve(_max_size);
+    _dns.rehash(_max_size);
 }
 //------------------------------------------------------------------------------
 
