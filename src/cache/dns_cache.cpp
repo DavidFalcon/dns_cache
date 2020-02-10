@@ -1,7 +1,6 @@
 #include <iostream>
 #include <mutex>
 #include <cassert>
-#include <iostream>
 
 #include "dns_cache.hpp"
 
@@ -37,7 +36,7 @@ std::string DNSCache::resolve(const std::string& name) const
     std::shared_lock lock(_mutex);
 
     auto dns_iter = _dns.find(name);
-    if( dns_iter != _dns.end() )
+    if(dns_iter != _dns.end())
         return (dns_iter->second).ip;
     return "";
 }
