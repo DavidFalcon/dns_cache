@@ -26,7 +26,7 @@ public:
     /// public methods
     void update(const std::string& name, const std::string& ip);
 
-    std::string resolve(const std::string& name) const;
+    std::string resolve(const std::string& name);
 
     size_t size() const;
     size_t max_size() const;
@@ -67,3 +67,5 @@ private:
     mutable sf::contention_free_shared_mutex<> _mutex;
     //mutable std::shared_mutex _mutex;
 };
+
+constexpr auto DNS = DNSCache::inst;

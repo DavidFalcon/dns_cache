@@ -6,15 +6,15 @@ int main(int argc, char ** argv)
 {
     DNSCache::init(3);
 
-    DNSCache::inst().update("a", "1");
-    DNSCache::inst().update("b", "2");
-    DNSCache::inst().update("c", "3");
-    DNSCache::inst().update("d", "4");
+    DNS().update("a", "1");
+    DNS().update("b", "2");
+    DNS().update("c", "3");
+    DNS().update("d", "4");
 
-    std::cout << DNSCache::inst().resolve("a") << " \n" <<
-                 DNSCache::inst().resolve("b") << " \n" <<
-                 DNSCache::inst().resolve("f") << " \n" <<
-                 DNSCache::inst().resolve("d") << " \n";
+    std::cout << DNS().resolve("a") << " \n" <<
+                 DNS().resolve("b") << " \n" <<
+                 DNS().resolve("f") << " \n" <<
+                 DNS().resolve("d") << " \n";
 
     return 0;
 }

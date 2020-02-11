@@ -45,7 +45,7 @@ void fill_dns()
 {
     for(const auto& [name, ip] : dns)
     {
-        DNSCache::inst().update(name,ip);
+        DNS().update(name,ip);
     }
 }
 
@@ -54,17 +54,17 @@ void test_cache()
     for(size_t val = max_size -1; val >= max_size/2; --val)
     {
         auto dns_value = dns.at(rand() % (max_size - val) + val);
-        DNSCache::inst().update(dns_value.first, dns_value.second);
+        DNS().update(dns_value.first, dns_value.second);
 
         dns_value = dns.at(rand() % (max_size - val) + val);
-        DNSCache::inst().resolve(dns_value.first);
+        DNS().resolve(dns_value.first);
     }
 }
 
 TEST(DNS, Performance)
 {
     srand (time(NULL));
-    DNSCache::inst().reinit(max_size/2);
+    DNS().reinit(max_size/2);
 
     fill_v();
     fill_dns();

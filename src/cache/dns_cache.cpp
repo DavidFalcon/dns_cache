@@ -31,13 +31,16 @@ void DNSCache::update(const std::string& name, const std::string& ip)
 }
 //------------------------------------------------------------------------------
 
-std::string DNSCache::resolve(const std::string& name) const
+std::string DNSCache::resolve(const std::string& name)
 {
-    std::shared_lock lock(_mutex);
+    std::unique_lock lock(_mutex);
 
     auto dns_iter = _dns.find(name);
     if(dns_iter != _dns.end())
+    {
+        up(dns_iter);
         return (dns_iter->second).ip;
+    }
     return "";
 }
 //------------------------------------------------------------------------------
