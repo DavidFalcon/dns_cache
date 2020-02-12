@@ -9,7 +9,10 @@ class DNSCache
 {
 public:
 
-    static constexpr size_t CACHE_SIZE_DEF = 1000;
+    /// public methods
+    void update(const std::string& name, const std::string& ip);
+
+    std::string resolve(const std::string& name);
 
     /// singleton access
     static DNSCache& init(size_t max_size)
@@ -23,24 +26,25 @@ public:
         return init(CACHE_SIZE_DEF);
     }
 
-    /// public methods
-    void update(const std::string& name, const std::string& ip);
-
-    std::string resolve(const std::string& name);
-
-    size_t size() const;
-    size_t max_size() const;
-
-    /// reinit used only for gtests
-    void reinit(size_t new_size = CACHE_SIZE_DEF);
-
     /// delete default constructors object
     DNSCache(DNSCache&&) = delete;
     DNSCache(const DNSCache&) = delete;
     DNSCache& operator=(DNSCache&&) = delete;
     DNSCache& operator=(const DNSCache&) = delete;
 
+    static constexpr size_t CACHE_SIZE_DEF = 1000;
+
 private:
+    friend class TestDNS;
+    friend class Performance;
+
+    /// methods used only for gtests
+    size_t size() const;
+    size_t max_size() const;
+    void reinit(size_t new_size = CACHE_SIZE_DEF);
+
+private:
+
     explicit DNSCache(size_t max_size);
 
     struct Node
