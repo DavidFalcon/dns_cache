@@ -85,6 +85,7 @@ void DNSCache::up(DNSInfo::iterator& it)
     if(it->second.prev)
     {
         auto& node_prev = _dns[*it->second.prev];
+        it->second.prev = nullptr;
         node_prev.next  = it->second.next;
 
         if(it->second.next)
@@ -127,7 +128,6 @@ void DNSCache::pop_back()
     }
     else
     {
-        std::cout << "WFT \n";
         _head = _tail = nullptr;
     }
     _dns.erase(node_tail);

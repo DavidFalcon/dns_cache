@@ -1,46 +1,54 @@
 #include "dns_cache.hpp"
 #include "gtest/gtest.h"
 
-TEST(DNS, singleton)
+class TestDNS : public ::testing::Test
+{
+protected:
+    size_t size() const { return DNS().size(); };
+    size_t max_size() const { return DNS().max_size(); };
+    void reinit(size_t new_size = DNSCache::CACHE_SIZE_DEF) { DNS().reinit(new_size); };
+};
+
+TEST_F(TestDNS, singleton)
 {
     DNSCache::init(10);
-    ASSERT_EQ(DNS().max_size(), 10);
+    ASSERT_EQ(max_size(), 10);
 
     DNSCache::init(100);
-    ASSERT_EQ(DNSCache::inst().max_size(), 10);
+    ASSERT_EQ(max_size(), 10);
 
     auto& inst = DNS();
-    DNS().reinit(20);
+    reinit(20);
     ASSERT_EQ(&inst, &DNS());
 }
 
-TEST(DNS, DefaultSize)
+TEST_F(TestDNS, DefaultSize)
 {
     DNSCache::init(3);
-    ASSERT_EQ(DNS().size(), 0);
+    ASSERT_EQ(size(), 0);
 
-    DNS().reinit(0);
-    ASSERT_EQ(DNS().max_size(), DNSCache::CACHE_SIZE_DEF);
+    reinit(0);
+    ASSERT_EQ(max_size(), DNSCache::CACHE_SIZE_DEF);
 }
 
-TEST(DNS, Size)
+TEST_F(TestDNS, Size)
 {
-    DNS().reinit(2);
-    ASSERT_EQ(DNS().size(), 0);
+    reinit(2);
+    ASSERT_EQ(size(), 0);
 
     DNS().update("a", "1");
-    ASSERT_EQ(DNS().size(), 1);
+    ASSERT_EQ(size(), 1);
 
     DNS().update("b", "2");
-    ASSERT_EQ(DNS().size(), 2);
+    ASSERT_EQ(size(), 2);
 
     DNS().update("c", "3");
-    ASSERT_EQ(DNS().size(), 2);
+    ASSERT_EQ(size(), 2);
 }
 
-TEST(DNS, Update)
+TEST_F(TestDNS, Update)
 {
-    DNS().reinit(3);
+    reinit(3);
 
     DNS().update("a", "1");
     DNS().update("b", "2");
@@ -53,9 +61,9 @@ TEST(DNS, Update)
     ASSERT_EQ(DNS().resolve("d"), "4");
 }
 
-TEST(DNS, UpResolve)
+TEST_F(TestDNS, UpResolve)
 {
-    DNS().reinit(3);
+    reinit(3);
 
     DNS().update("a", "1");
     DNS().update("b", "2");
@@ -70,9 +78,9 @@ TEST(DNS, UpResolve)
     ASSERT_EQ(DNS().resolve("f"), "");
 }
 
-TEST(DNS, UpUpdate)
+TEST_F(TestDNS, UpUpdate)
 {
-    DNS().reinit(3);
+    reinit(3);
 
     DNS().update("a", "1");
     DNS().update("b", "2");
